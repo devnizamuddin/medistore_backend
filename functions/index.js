@@ -7,81 +7,84 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const { setGlobalOptions } = require("firebase-functions");
-const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const {setGlobalOptions} = require("firebase-functions");
+const {onDocumentWritten} = require("firebase-functions/v2/firestore");
 const logger = require("firebase-functions/logger");
 
 const admin = require("firebase-admin");
 admin.initializeApp();
 
-setGlobalOptions({ maxInstances: 10 });
+setGlobalOptions({maxInstances: 10});
 
 /**
  * Send notification to a topic when a document is written in `puppies/{uid}`.
  */
-exports.sendNotificationToTopic = onDocumentWritten("puppies/{uid}", async (event) => {
-    const afterData = event.data?.after?.data();
-    if (!afterData) {
+exports.sendNotificationToTopic = onDocumentWritten(
+    "UserNotifications/{uid}",
+    async (event) => {
+      const afterData = event.data?.after?.data();
+      if (!afterData) {
         logger.info("No data found after write");
         return;
-    }
+      }
 
-    const title = afterData.title;
-    const content = afterData.content;
+      const {title, content} = afterData;
 
-    const message = {
-        notification: {
-            title: title,
-            body: content,
-        },
-        topic: "namelesscoder",
-    };
+        const message = {
+            notification: {
+                title,
+                body: content,
+            },
+            topic: "GeneralUser",
+        };
 
-    try {
-        const response = await admin.messaging().send(message);
-        logger.info("Notification sent to topic:", response);
-    } catch (error) {
-        logger.error("Error sending topic notification:", error);
-    }
-});
+        try {
+            const response = await admin.messaging().send(message);
+            logger.info("Notification sent to topic:", response);
+        } catch (error) {
+            logger.error("Error sending topic notification:", error);
+        }
+    },
+);
 
 /**
  * Send notification to a specific FCM token when a document is written in `messages/{mUid}`.
  */
-exports.sendNotificationToFCMToken = onDocumentWritten("messages/{mUid}", async (event) => {
-    const afterData = event.data && event.data.after ? event.data.after.data() : null;
-    if (!afterData) {
-        logger.info("No data found after write");
-        return;
-    }
-
-    const uid = afterData.userUid;
-    const title = afterData.title;
-    const content = afterData.content;
-
-    try {
-        const userDoc = await admin.firestore().doc(`users/${uid}`).get();
-        const fcmToken = userDoc.get("fcm");
-
-        if (!fcmToken) {
-            logger.warn(`No FCM token found for user: ${uid}`);
+exports.sendNotificationToFCMToken = onDocumentWritten(
+    "messages/{mUid}",
+    async (event) => {
+        const afterData = event.data?.after?.data();
+        if (!afterData) {
+            logger.info("No data found after write");
             return;
         }
 
-        const message = {
-            notification: {
-                title: title,
-                body: content,
-            },
-            token: fcmToken,
-        };
+      const {userUid, title, content} = afterData;
 
-        const response = await admin.messaging().send(message);
-        logger.info("Notification sent to FCM token:", response);
-    } catch (error) {
-        logger.error("Error sending FCM notification:", error);
-    }
-});
+      try {
+            const userDoc = await admin.firestore().doc(`users/${userUid}`).get();
+            const fcmToken = userDoc.get("fcm");
+
+            if (!fcmToken) {
+                logger.warn(`No FCM token found for user: ${userUid}`);
+                return;
+            }
+
+            const message = {
+                notification: {
+                    title,
+                    body: content,
+                },
+                token: fcmToken,
+            };
+
+            const response = await admin.messaging().send(message);
+            logger.info("Notification sent to FCM token:", response);
+        } catch (error) {
+            logger.error("Error sending FCM notification:", error);
+        }
+    },
+);
 
 //* ============================================================| Initial Given Code |====================================================================================================
 
