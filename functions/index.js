@@ -17,7 +17,7 @@ admin.initializeApp();
 setGlobalOptions({maxInstances: 10});
 
 /**
- * Send notification to a topic when a document is written in `puppies/{uid}`.
+ * Send notification to a topic.
  */
 exports.sendNotificationToTopic = onDocumentWritten(
     "UserNotifications/{uid}",
@@ -48,7 +48,7 @@ exports.sendNotificationToTopic = onDocumentWritten(
 );
 
 /**
- * Send notification to a specific FCM token when a document is written in `messages/{mUid}`.
+ * Send notification to a specific FCM token.
  */
 exports.sendNotificationToFCMToken = onDocumentWritten(
     "messages/{mUid}",
@@ -86,8 +86,7 @@ exports.sendNotificationToFCMToken = onDocumentWritten(
     },
 );
 
-//* ============================================================| Initial Given Code |====================================================================================================
-
+//* |============ Initial Given Code ============|
 
 /**
  * Import function triggers from their respective submodules:
