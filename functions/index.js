@@ -1,12 +1,3 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
 const {setGlobalOptions} = require("firebase-functions");
 const {onDocumentWritten} = require("firebase-functions/v2/firestore");
 const logger = require("firebase-functions/logger");
@@ -16,8 +7,11 @@ admin.initializeApp();
 
 setGlobalOptions({maxInstances: 10});
 
-/**
- * Send notification to a topic.
+/*
+ * =====================================================================
+ * Send notification to -> GeneralUser
+ * On adding document on 'UserNotifications' collection
+ * =====================================================================
  */
 exports.sendNotificationToTopic = onDocumentWritten(
     "UserNotifications/{uid}",
@@ -46,9 +40,44 @@ exports.sendNotificationToTopic = onDocumentWritten(
       }
     },
 );
+/*
+ * =====================================================================
+ * * Send notification to -> AdminUser
+ * * On adding document on 'UserNotifications' collection
+ * =====================================================================
+ */
+exports.sendNotificationToTopic = onDocumentWritten(
+    "Order/{uid}",
+    async (event) => {
+      const afterData = event.data?.after?.data();
+      if (!afterData) {
+        logger.info("No data found after write");
+        return;
+      }
 
-/**
- * Send notification to a specific FCM token.
+      const {shopAddress, userName} = afterData;
+
+      const message = {
+        notification: {
+          title: "New order placed",
+          body: `Shop: ${shopAddress}, Owner: ${userName}`,
+        },
+        topic: "AdminUser",
+      };
+
+      try {
+        const response = await admin.messaging().send(message);
+        logger.info("Notification sent to topic:", response);
+      } catch (error) {
+        logger.error("Error sending topic notification:", error);
+      }
+    },
+);
+/*
+ * =====================================================================
+ * * Send notification to specfic user,
+ * * By using FCM token
+ * =====================================================================
  */
 exports.sendNotificationToFCMToken = onDocumentWritten(
     "messages/{mUid}",
@@ -85,40 +114,3 @@ exports.sendNotificationToFCMToken = onDocumentWritten(
       }
     },
 );
-
-//* |============ Initial Given Code ============|
-
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-
-//* const { setGlobalOptions } = require("firebase-functions");
-//* const { onRequest } = require("firebase-functions/https");
-//* const logger = require("firebase-functions/logger");
-
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-
-//* setGlobalOptions({ maxInstances: 10 });
-
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
-
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
