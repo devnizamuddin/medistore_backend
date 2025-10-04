@@ -14,32 +14,37 @@ setGlobalOptions({maxInstances: 10});
  * =====================================================================
  */
 exports.sendNotificationToTopic = onDocumentWritten(
-    "UserNotifications/{uid}",
-    async (event) => {
-      const afterData = event.data?.after?.data();
-      if (!afterData) {
-        logger.info("No data found after write");
-        return;
-      }
+  "UserNotifications/{uid}",
+  async (event) => {
+    const afterData = event.data?.after?.data();
+    if (!afterData) {
+      console.log("No data found after write");
+      return;
+    }
 
-      const {title, content} = afterData;
+    const { id, title, body, imageUrl, data } = afterData;
 
-      const message = {
-        notification: {
-          title,
-          body: content,
-        },
-        topic: "GeneralUser",
-      };
+    // Construct FCM message according to your Dart map
+    const message = {
+      android: {}, // optional platform-specific config
+      notification: {
+        title: title,
+        body: body,
+        ...(imageUrl ? { imageUrl } : {}), // include image if exists
+      },
+      data: data || {}, // custom key/value payload
+      topic: "GeneralUser", // target topic
+    };
 
-      try {
-        const response = await admin.messaging().send(message);
-        logger.info("Notification sent to topic:", response);
-      } catch (error) {
-        logger.error("Error sending topic notification:", error);
-      }
-    },
+    try {
+      const response = await admin.messaging().send(message);
+      console.log("Notification sent to topic:", response);
+    } catch (error) {
+      console.error("Error sending topic notification:", error);
+    }
+  }
 );
+
 /*
  * =====================================================================
  * * Send notification to -> AdminUser
