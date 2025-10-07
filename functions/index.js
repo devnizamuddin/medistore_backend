@@ -14,22 +14,27 @@ setGlobalOptions({maxInstances: 10});
  * =====================================================================
  */
 exports.sendNotificationToTopic = onDocumentWritten(
-    "UserNotifications/{uid}",
+    "AllUsersNotification/{uid}",
     async (event) => {
-      const afterData = event.data?.after?.data();
-      if (!afterData) {
+      const snapshot = event.data;
+      if (!snapshot) {
         logger.info("No data found after write");
         return;
       }
 
-      const {title, content} = afterData;
+      const title = snapshot?.notification?.title || "Notification";
+      const body = snapshot?.notification?.body || "New notification";
+      const imageUrl = snapshot?.notification?.image || null;
+      const data = snapshot?.data || {};
 
       const message = {
+        topic: "AllUsersNotification",
         notification: {
           title,
-          body: content,
+          body,
+          ...(imageUrl ? {imageUrl} : {}),
         },
-        topic: "GeneralUser",
+        data,
       };
 
       try {
@@ -46,7 +51,8 @@ exports.sendNotificationToTopic = onDocumentWritten(
  * * On adding document on 'UserNotifications' collection
  * =====================================================================
  */
-exports.sendNotificationToTopic = onDocumentWritten(
+
+exports.sendNotificationToAdminUser = onDocumentWritten(
     "Order/{uid}",
     async (event) => {
       const afterData = event.data?.after?.data();
@@ -79,6 +85,7 @@ exports.sendNotificationToTopic = onDocumentWritten(
  * * By using FCM token
  * =====================================================================
  */
+
 exports.sendNotificationToFCMToken = onDocumentWritten(
     "messages/{mUid}",
     async (event) => {
