@@ -9,12 +9,12 @@ setGlobalOptions({maxInstances: 10});
 
 /*
  * =====================================================================
- * Send notification to -> GeneralUser
- * On adding document on 'UserNotifications' collection
+ * 📩 AllUsersNotification added by Admin 👮
+ * 🔔 Notifiy 👉 Customers 👥
  * =====================================================================
  */
-exports.sendNotificationToTopic = onDocumentWritten(
-    "AllUsersNotification/{uid}",
+exports.onAllUsersNotificationAdded = onDocumentWritten(
+    "AllUsersNotification/{id}",
     async (event) => {
       const snapshot = event.data;
       if (!snapshot) {
@@ -47,13 +47,13 @@ exports.sendNotificationToTopic = onDocumentWritten(
 );
 /*
  * =====================================================================
- * * Send notification to -> AdminUser
- * * On adding document on 'UserNotifications' collection
+ * * 📦 Order added by Customer 👤
+ * * 🔔 Notifiy 👉 AdminUser 👮
  * =====================================================================
  */
 
-exports.sendNotificationToAdminUser = onDocumentWritten(
-    "Order/{uid}",
+exports.onOrderAdded = onDocumentWritten(
+    "Order/{id}",
     async (event) => {
       const afterData = event.data?.after?.data();
       if (!afterData) {
@@ -81,13 +81,13 @@ exports.sendNotificationToAdminUser = onDocumentWritten(
 );
 /*
  * =====================================================================
- * * Send notification to specfic user,
- * * By using FCM token
+ * 📩 UsersNotifications added by Admin 👮
+ * 🔔 Notifiy 👉 Specifc User 🧑‍💼🔍
  * =====================================================================
  */
 
-exports.sendNotificationToFCMToken = onDocumentWritten(
-    "messages/{mUid}",
+exports.onUserNotificationsAdded = onDocumentWritten(
+    "UsersNotifications/{id}",
     async (event) => {
       const afterData = event.data?.after?.data();
       if (!afterData) {
