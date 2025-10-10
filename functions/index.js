@@ -16,25 +16,22 @@ setGlobalOptions({maxInstances: 10});
 exports.onAllUsersNotificationAdded = onDocumentWritten(
     "AllUsersNotification/{id}",
     async (event) => {
-      const snapshot = event.data;
-      if (!snapshot) {
+      const afterData = event.data?.after?.data();
+      if (!afterData) {
         logger.info("No data found after write");
         return;
       }
 
-      const title = snapshot?.notification?.title || "Notification";
-      const body = snapshot?.notification?.body || "New notification";
-      const imageUrl = snapshot?.notification?.image || null;
-      const data = snapshot?.data || {};
+      const {title, body, image, data} = afterData;
 
       const message = {
         topic: "AllUsersNotification",
         notification: {
-          title,
-          body,
-          ...(imageUrl ? {imageUrl} : {}),
+          title: title,
+          body: body,
+          image: image,
         },
-        data,
+        data: data,
       };
 
       try {
@@ -65,8 +62,8 @@ exports.onOrderAdded = onDocumentWritten(
 
       const message = {
         notification: {
-          title: "New order placed",
-          body: `Shop: ${shopAddress}, Owner: ${userName}`,
+          title: `${userName} placed an order`,
+          body: `Address: ${shopAddress}`,
         },
         topic: "AdminUser",
       };
